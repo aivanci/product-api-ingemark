@@ -21,8 +21,12 @@ spring:
 
 app:
   hnb:
-    # HNB Exchange Rate List API (base currency EUR since 1.1.2023)
-    # TBD
+    base-url: ${HNB_BASE_URL:https://api.hnb.hr/tecajn-eur/v3}
+    connect-timeout-ms: ${HNB_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${HNB_READ_TIMEOUT_MS:5000}
+    retry:
+      max-attempts: ${HNB_RETRY_MAX_ATTEMPTS:3}
+      delay-ms: ${HNB_RETRY_DELAY_MS:500}
 
 server:
   port: ${SERVER_PORT:8080}
