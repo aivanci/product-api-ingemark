@@ -114,6 +114,10 @@ Response `201 Created` (with `Location: /api/v1/products/1`):
 }
 ```
 
+### `GET /api/v1/products/{id}` — view a specific product
+
+`200 OK` with the same shape as above, or `404 Not Found` if the id doesn't exist.
+
 ### Validation & error responses
 
 All error responses share one shape:
