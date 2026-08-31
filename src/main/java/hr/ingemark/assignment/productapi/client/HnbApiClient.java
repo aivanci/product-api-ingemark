@@ -14,9 +14,6 @@ import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
-/**
- * HTTP client for the HNB exchange rate list
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

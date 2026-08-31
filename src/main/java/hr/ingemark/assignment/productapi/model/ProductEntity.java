@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @Table(name = "products")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Product {
+public class ProductEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,7 +37,7 @@ public class Product {
     @Column(name = "is_available", nullable = false)
     private boolean available;
 
-    public Product(String code, String name, BigDecimal priceEur, BigDecimal priceUsd, boolean available) {
+    public ProductEntity(String code, String name, BigDecimal priceEur, BigDecimal priceUsd, boolean available) {
         this.code = code;
         this.name = name;
         this.priceEur = priceEur;
