@@ -1,7 +1,9 @@
 package hr.ingemark.assignment.productapi.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -19,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.exception.DuplicateProductCodeException;
+import hr.ingemark.assignment.productapi.exception.ProductNotFoundException;
 import hr.ingemark.assignment.productapi.service.ProductService;
 
 @WebMvcTest(ProductController.class)
@@ -72,6 +75,26 @@ class ProductControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequestJson()))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void getProduct_returns200WhenFound() throws Exception {
+        ProductResponse response = new ProductResponse(
+                1L, VALID_CODE, "Widget", new BigDecimal("100.00"), new BigDecimal("116.45"), true);
+        given(productService.getProduct(1L)).willReturn(response);
+
+        mockMvc.perform(get("/api/v1/products/{id}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(VALID_CODE));
+    }
+
+    @Test
+    void getProduct_returns404WhenNotFound() throws Exception {
+        given(productService.getProduct(eq(99L)))
+                .willThrow(new ProductNotFoundException("Product with id 99 not found"));
+
+        mockMvc.perform(get("/api/v1/products/{id}", 99L))
+                .andExpect(status().isNotFound());
     }
 
     private String validRequestJson() {

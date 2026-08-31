@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.exception.DuplicateProductCodeException;
+import hr.ingemark.assignment.productapi.exception.ProductNotFoundException;
 import hr.ingemark.assignment.productapi.model.ProductEntity;
 import hr.ingemark.assignment.productapi.repo.ProductRepository;
 import hr.ingemark.assignment.productapi.util.ProductMapper;
@@ -71,6 +73,26 @@ class ProductServiceTest {
                 .isInstanceOf(DuplicateProductCodeException.class);
 
         verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void getProduct_returnsMappedResponseWhenFound() {
+        ProductEntity product = new ProductEntity(VALID_CODE, "Widget", new BigDecimal("100.00"), new BigDecimal("108.50"), true);
+        ReflectionTestUtils.setField(product, "id", 1L);
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+        ProductResponse response = productService.getProduct(1L);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.code()).isEqualTo(VALID_CODE);
+    }
+
+    @Test
+    void getProduct_throwsWhenNotFound() {
+        given(productRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.getProduct(99L))
+                .isInstanceOf(ProductNotFoundException.class);
     }
 
     private ProductEntity withGeneratedId(InvocationOnMock invocation) {

@@ -3,6 +3,8 @@ package hr.ingemark.assignment.productapi.controller;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +34,13 @@ public class ProductController {
         ProductResponse response = productService.createProduct(request);
         return ResponseEntity.created(locationOf(response)).body(response);
     }
+
+    @Operation(summary = "Get a product by id")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProduct(id));
+    }
+
 
     private URI locationOf(ProductResponse response) {
         return URI.create("/api/v1/products/" + response.id());

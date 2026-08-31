@@ -2,18 +2,21 @@ package hr.ingemark.assignment.productapi.service;
 
 import static hr.ingemark.assignment.productapi.service.ExchangeRateService.PRICE_SCALE;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.exception.DuplicateProductCodeException;
+import hr.ingemark.assignment.productapi.exception.ProductNotFoundException;
 import hr.ingemark.assignment.productapi.model.ProductEntity;
 import hr.ingemark.assignment.productapi.repo.ProductRepository;
 import hr.ingemark.assignment.productapi.util.ProductMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +36,12 @@ public class ProductService {
         ProductEntity product = buildProductFromRequest(request);
         ProductEntity saved = saveProduct(product);
         return productMapper.toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getProduct(Long id) {
+        ProductEntity product = fetchProduct(id);
+        return productMapper.toResponse(product);
     }
 
     private void assertCodeIsUnique(String code) {
@@ -63,6 +72,11 @@ public class ProductService {
 
     private DuplicateProductCodeException duplicateCodeException(String code) {
         return new DuplicateProductCodeException("Product with code '%s' already exists".formatted(code));
+    }
+
+    private ProductEntity fetchProduct(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with id %d not found".formatted(id)));
     }
 
 }
