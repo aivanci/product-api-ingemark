@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * Snake case attributes used as per instructions in the task.
+ */
 public record ProductRequest(
 
         @NotBlank(message = "code must not be blank")

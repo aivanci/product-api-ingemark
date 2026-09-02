@@ -2,6 +2,8 @@ package hr.ingemark.assignment.productapi.controller;
 
 import java.net.URI;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import hr.ingemark.assignment.productapi.dto.PageResponse;
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.service.ProductService;
@@ -39,6 +42,14 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getProduct(id));
+    }
+
+    @Operation(summary = "List products",
+            description = "Paginated. Sort by wire field names, e.g. ?sort=price_eur,desc&sort=name,asc. "
+                    + "Unknown sort properties are rejected with 400.")
+    @GetMapping
+    public ResponseEntity<PageResponse<ProductResponse>> listProducts(@ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(productService.listProducts(pageable));
     }
 
 

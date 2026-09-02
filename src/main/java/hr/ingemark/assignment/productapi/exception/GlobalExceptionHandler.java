@@ -53,6 +53,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request, null);
     }
 
+    @ExceptionHandler(InvalidSortPropertyException.class)
+    public ResponseEntity<ApiError> handleInvalidSortProperty(InvalidSortPropertyException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
     private Map<String, String> extractFieldErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new LinkedHashMap<>();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {

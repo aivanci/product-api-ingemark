@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 
+/**
+ * Snake case attributes used as per instructions in the task.
+ */
 public record ProductResponse(
         Long id,
         String code,

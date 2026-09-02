@@ -1,7 +1,6 @@
 package hr.ingemark.assignment.productapi.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,17 +9,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import hr.ingemark.assignment.productapi.dto.PageResponse;
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.exception.DuplicateProductCodeException;
+import hr.ingemark.assignment.productapi.exception.InvalidSortPropertyException;
 import hr.ingemark.assignment.productapi.exception.ProductNotFoundException;
 import hr.ingemark.assignment.productapi.service.ProductService;
 
@@ -90,11 +93,35 @@ class ProductControllerTest {
 
     @Test
     void getProduct_returns404WhenNotFound() throws Exception {
-        given(productService.getProduct(eq(99L)))
+        given(productService.getProduct(99L))
                 .willThrow(new ProductNotFoundException("Product with id 99 not found"));
 
         mockMvc.perform(get("/api/v1/products/{id}", 99L))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void listProducts_returns200WithPagedProducts() throws Exception {
+        ProductResponse response = new ProductResponse(
+                1L, VALID_CODE, "Widget", new BigDecimal("100.00"), new BigDecimal("116.45"), true);
+        given(productService.listProducts(any(Pageable.class)))
+                .willReturn(new PageResponse<>(List.of(response), 0, 20, 1, 1));
+
+        mockMvc.perform(get("/api/v1/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].code").value(VALID_CODE))
+                .andExpect(jsonPath("$.total_elements").value(1))
+                .andExpect(jsonPath("$.total_pages").value(1));
+    }
+
+    @Test
+    void listProducts_returns400WhenSortPropertyIsUnknown() throws Exception {
+        given(productService.listProducts(any(Pageable.class)))
+                .willThrow(new InvalidSortPropertyException(
+                        "Unknown sort property 'bogus'. Sortable properties: code, id, is_available, name, price_eur, price_usd"));
+
+        mockMvc.perform(get("/api/v1/products?sort=bogus,asc"))
+                .andExpect(status().isBadRequest());
     }
 
     private String validRequestJson() {

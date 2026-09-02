@@ -59,11 +59,11 @@ password `postgres`. Flyway creates the schema automatically on application star
    ./mvnw test
    ```
 
-   Unit  tests (Mockito for the service layer, `MockRestServiceServer` for the HNB
-   integration, `@WebMvcTest` for the controller) are self-contained and need neither Postgres
-   nor Docker. `ProductApiIntegrationTest` additionally boots the full application against a
-   throwaway Postgres started via Testcontainers. It requires Docker and is skipped
-   automatically when Docker is not available.
+Unit  tests (Mockito for the service layer, `MockRestServiceServer` for the HNB
+integration, `@WebMvcTest` for the controller) are self-contained and need neither Postgres
+nor Docker. `ProductApiIntegrationTest` additionally boots the full application against a
+throwaway Postgres started via Testcontainers. It requires Docker and is skipped 
+automatically when Docker is not available.
 
 ### Configuration
 
@@ -117,6 +117,32 @@ Response `201 Created` (with `Location: /api/v1/products/1`):
 ### `GET /api/v1/products/{id}` — view a specific product
 
 `200 OK` with the same shape as above, or `404 Not Found` if the id doesn't exist.
+
+### `GET /api/v1/products` — list products (paginated, sortable)
+
+`200 OK` with a pagination envelope. Query parameters:
+
+| Parameter | Default | Notes                                                                 |
+|-----------|---------|------------------------------------------------------------------------|
+| `page`    | `0`     | Zero-indexed                                                            |
+| `size`    | `20`    | Max `100`                                                                |
+| `sort`    | `id,asc`| Repeatable, e.g. `?sort=price_eur,desc&sort=name,asc`. Sortable properties: `id`, `code`, `name`, `price_eur`, `price_usd`, `is_available` (wire names — the same fields you see in the response). An unrecognized property returns `400 Bad Request` rather than an internal error. |
+
+```bash
+curl "http://localhost:8080/api/v1/products?page=0&size=10&sort=price_eur,desc"
+```
+
+```json
+{
+  "content": [
+    { "id": 1, "code": "ABCDEFGHIJ", "name": "Widget", "price_eur": 100.00, "price_usd": 116.45, "is_available": true }
+  ],
+  "page": 0,
+  "size": 10,
+  "total_elements": 1,
+  "total_pages": 1
+}
+```
 
 ### Validation & error responses
 

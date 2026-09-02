@@ -4,14 +4,25 @@ import static hr.ingemark.assignment.productapi.service.ExchangeRateService.PRIC
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import hr.ingemark.assignment.productapi.dto.PageResponse;
 import hr.ingemark.assignment.productapi.dto.ProductRequest;
 import hr.ingemark.assignment.productapi.dto.ProductResponse;
 import hr.ingemark.assignment.productapi.exception.DuplicateProductCodeException;
+import hr.ingemark.assignment.productapi.exception.InvalidSortPropertyException;
 import hr.ingemark.assignment.productapi.exception.ProductNotFoundException;
 import hr.ingemark.assignment.productapi.model.ProductEntity;
 import hr.ingemark.assignment.productapi.repo.ProductRepository;
@@ -21,6 +32,19 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+
+    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.ASC, "id");
+
+    // Wire field name (as documented in the API contract) -> entity property name.
+    // Clients sort by the names they see in responses; unknown names get a 400, never a 500.
+    private static final Map<String, String> SORTABLE_PROPERTIES = Map.of(
+            "id", "id",
+            "code", "code",
+            "name", "name",
+            "price_eur", "priceEur",
+            "price_usd", "priceUsd",
+            "is_available", "available"
+    );
 
     private final ProductRepository productRepository;
     private final ExchangeRateService exchangeRateService;
@@ -42,6 +66,40 @@ public class ProductService {
     public ProductResponse getProduct(Long id) {
         ProductEntity product = fetchProduct(id);
         return productMapper.toResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProductResponse> listProducts(Pageable pageable) {
+        Page<ProductResponse> page = productRepository.findAll(translateSort(pageable))
+                .map(productMapper::toResponse);
+        return PageResponse.of(page);
+    }
+
+    private Pageable translateSort(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            // Deterministic default ordering
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), DEFAULT_SORT);
+        }
+
+        List<Order> translatedOrders = new ArrayList<>();
+        for (Order order : pageable.getSort()) {
+            translatedOrders.add(new Order(order.getDirection(), entityPropertyFor(order.getProperty())));
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(translatedOrders));
+    }
+
+    private String entityPropertyFor(String wireName) {
+        String entityProperty = SORTABLE_PROPERTIES.get(wireName);
+        if (entityProperty == null) {
+            throw new InvalidSortPropertyException(
+                    "Unknown sort property '%s'. Sortable properties: %s"
+                            .formatted(wireName, sortablePropertyNames()));
+        }
+        return entityProperty;
+    }
+
+    private String sortablePropertyNames() {
+        return SORTABLE_PROPERTIES.keySet().stream().sorted().collect(Collectors.joining(", "));
     }
 
     private void assertCodeIsUnique(String code) {
