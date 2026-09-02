@@ -69,3 +69,12 @@ to Spring Data.
 **Consequences:** The sort contract matches the JSON response field names, not Java property
 names; an unrecognized property returns a clean `400` instead of a `PropertyReferenceException`
 surfacing as an unhandled `500`.
+
+## ADR-8: A minimal, purpose-built Grafana dashboard
+
+**Context:** Wanted to demonstrate observability familiarity - request counts and rates by
+status code per endpoint.
+**Decision:** Add Actuator + Micrometer (which auto-instruments `http_server_requests_seconds_count`,
+tagged by `uri`/`status`/`outcome`, with zero custom code) and provision two Grafana panels - a
+table of request counts and a timeseries of request rate, both grouped by `uri` and `status` -
+not a broad "usual metrics" dashboard.

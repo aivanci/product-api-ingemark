@@ -34,3 +34,14 @@ server:
 logging:
   level:
     hr.ingemark.assignment.productapi: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Deliberately not `*` - only what's needed. /actuator/prometheus is unauthenticated
+        # (no Spring Security in this project), so keep the exposed surface minimal.
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

@@ -15,6 +15,7 @@ products, with `price_usd` calculated server-side from `price_eur` using the Cro
 - Lombok, MapStruct
 - springdoc-openapi (Swagger UI)
 - JUnit 5, Mockito, AssertJ, Spring `MockMvc` / `MockRestServiceServer`, Testcontainers
+- Spring Boot Actuator, Micrometer, Prometheus, Grafana (observability)
 
 ## Prerequisites
 
@@ -41,7 +42,9 @@ Maven 3.9 on first use.
    ```
 
 This starts Postgres 16 on `localhost:5432` with database `productdb`, user `postgres`,
-password `postgres`. Flyway creates the schema automatically on application startup.
+password `postgres`. Flyway creates the schema automatically on application startup; no
+manual DDL needed), plus Prometheus (`localhost:9090`) and Grafana (`localhost:3000`) — see
+[Observability](#observability) below.
 
 3. **Run the application**
 
@@ -168,3 +171,30 @@ All error responses share one shape:
 | HNB exchange rate service unreachable/invalid (after retries) | `503 Service Unavailable`  |
 | Anything unexpected                           | `500 Internal Server Error`|
 
+
+## Observability
+
+`docker compose up -d` also starts Prometheus and Grafana, provisioned entirely as code, meaninig no
+manual setup.
+
+- **Metrics endpoint:** the app exposes `http://localhost:8080/actuator/prometheus` (Spring Boot
+  Actuator + Micrometer, auto-instrumented). This requires the app itself to be
+  running (`./mvnw spring-boot:run`), not just the containers.
+- **Prometheus:** `http://localhost:9090`, scraping the app every 15s.
+- **Grafana:** `http://localhost:3000`, anonymous Viewer access enabled (no login needed; a
+  local-demo convenience, never do this on anything internet-reachable). One pre-provisioned
+  dashboard, **"Product API - HTTP Status per Endpoint"**, with two panels: a table of request
+  counts and a timeseries of request rate, both grouped by endpoint and HTTP status from
+  `http_server_requests_seconds_count`. Endpoint routes are grouped by their template
+  (`/api/v1/products/{id}`), not the resolved path, so grouping stays bounded regardless of how
+  many products exist.
+
+Deliberately not a broader dashboard (latency percentiles, JVM/GC panels, etc.) — see
+[Architecture Decisions, ADR-8](docs/architecture/09_architecture_decisions.md) for why.
+
+## Architecture documentation
+
+Design rationale, architecture decisions (with context/decision/consequences), and known risks
+and technical debt live in [`docs/architecture/`](docs/architecture/README.md), a scoped-down
+[arc42](https://arc42.org) document, one file per section as is customary, rather than a
+duplicate of what's already covered above.
