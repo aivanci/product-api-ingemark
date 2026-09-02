@@ -33,7 +33,7 @@ graph TD
   Deliberately separate from `service` (see
   [Architecture Decisions, ADR-3](09_architecture_decisions.md)).
 - `repository`: `ProductRepository`, a plain Spring Data JPA repository.
-- `mapper` — `ProductMapper`, MapStruct-generated at compile time (see
+- `mapper`: `ProductMapper`, MapStruct-generated at compile time (see
   [Architecture Decisions, ADR-4](09_architecture_decisions.md)).
 - `domain`: `Product`, the one JPA entity.
 - `dto`: request/response/error shapes, plus `dto.hnb` for the HNB payload shape.
