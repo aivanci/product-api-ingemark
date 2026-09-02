@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: product-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/productdb}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  hnb:
+    base-url: ${HNB_BASE_URL:https://api.hnb.hr/tecajn-eur/v3}
+    connect-timeout-ms: ${HNB_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${HNB_READ_TIMEOUT_MS:5000}
+    retry:
+      max-attempts: ${HNB_RETRY_MAX_ATTEMPTS:3}
+      delay-ms: ${HNB_RETRY_DELAY_MS:500}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    hr.ingemark.assignment.productapi: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Deliberately not `*` - only what's needed. /actuator/prometheus is unauthenticated
+        # (no Spring Security in this project), so keep the exposed surface minimal.
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
